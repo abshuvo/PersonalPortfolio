@@ -3,7 +3,7 @@
     public class EducationInfo
     {
         public int Id { get; set; }
-        public string? TITLE { get; set; }
+        public string? Title { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public string? Department { get; set; }

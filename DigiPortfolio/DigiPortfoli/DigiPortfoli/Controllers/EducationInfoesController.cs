@@ -7,12 +7,15 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DigiPortfoli.Models;
 using DigiPortfoli.Models.Entities;
+using DigiPortfoli.Services;
+using System.Text.Json;
 
 namespace DigiPortfoli.Controllers
 {
     public class EducationInfoesController : Controller
     {
         private readonly DBConfiguration _context;
+        EducationManager _educationManager = new EducationManager();
 
         public EducationInfoesController(DBConfiguration context)
         {
@@ -20,144 +23,55 @@ namespace DigiPortfoli.Controllers
         }
 
         // GET: EducationInfoes
-        public async Task<IActionResult> Index()
-        {
-              return _context.EducationInfo != null ? 
-                          View(await _context.EducationInfo.ToListAsync()) :
-                          Problem("Entity set 'DBConfiguration.EducationInfo'  is null.");
-        }
-
-        // GET: EducationInfoes/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null || _context.EducationInfo == null)
-            {
-                return NotFound();
-            }
-
-            var educationInfo = await _context.EducationInfo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (educationInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(educationInfo);
-        }
-
-        // GET: EducationInfoes/Create
-        public IActionResult Create()
+        public IActionResult Index()
         {
             return View();
         }
+        [HttpGet]
+        public async Task<string> GetAllEducation()
+        {
+            return JsonSerializer.Serialize(await _educationManager.GetEducationInfoList(_context));
+        }
 
-        // POST: EducationInfoes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpGet]
+        public async Task<string> GetCategory(int id)
+        {
+            return JsonSerializer.Serialize(await _educationManager.GetEducationInfo(_context, id));
+        }
+
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,TITLE,StartDate,EndDate,Department,Institution,Description,Grade")] EducationInfo educationInfo)
+        public async Task<string> AddOrUpdate(EducationInfo model)
         {
-            if (ModelState.IsValid)
+            Result result = new Result();
+            if (model == null)
             {
-                _context.Add(educationInfo);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                result.Msg = "Nothing to update. Please insert valid data";
+                result.Status = "Error";
+                return JsonSerializer.Serialize(result);
             }
-            return View(educationInfo);
+            else
+            {
+                result = await _educationManager.AddOrUpdate(_context, model);
+                return JsonSerializer.Serialize(result);
+
+            }
         }
-
-        // GET: EducationInfoes/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null || _context.EducationInfo == null)
-            {
-                return NotFound();
-            }
-
-            var educationInfo = await _context.EducationInfo.FindAsync(id);
-            if (educationInfo == null)
-            {
-                return NotFound();
-            }
-            return View(educationInfo);
-        }
-
-        // POST: EducationInfoes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,TITLE,StartDate,EndDate,Department,Institution,Description,Grade")] EducationInfo educationInfo)
+        public async Task<string> DeleteEducation(int Id)
         {
-            if (id != educationInfo.Id)
+            Result result = new Result();
+            if (Id == 0)
             {
-                return NotFound();
+                result.Msg = "Nothing to delete. Please select valid data";
+                result.Status = "Error";
+                return JsonSerializer.Serialize(result);
             }
-
-            if (ModelState.IsValid)
+            else
             {
-                try
-                {
-                    _context.Update(educationInfo);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EducationInfoExists(educationInfo.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(educationInfo);
-        }
+                result = await _educationManager.DeleteEducation(_context, Id);
+                return JsonSerializer.Serialize(result);
 
-        // GET: EducationInfoes/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null || _context.EducationInfo == null)
-            {
-                return NotFound();
             }
-
-            var educationInfo = await _context.EducationInfo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (educationInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(educationInfo);
-        }
-
-        // POST: EducationInfoes/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            if (_context.EducationInfo == null)
-            {
-                return Problem("Entity set 'DBConfiguration.EducationInfo'  is null.");
-            }
-            var educationInfo = await _context.EducationInfo.FindAsync(id);
-            if (educationInfo != null)
-            {
-                _context.EducationInfo.Remove(educationInfo);
-            }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool EducationInfoExists(int id)
-        {
-          return (_context.EducationInfo?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
