@@ -7,12 +7,15 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DigiPortfoli.Models;
 using DigiPortfoli.Models.Entities;
+using DigiPortfoli.Services;
+using System.Text.Json;
 
 namespace DigiPortfoli.Controllers
 {
     public class SocialMediaInfoesController : Controller
     {
         private readonly DBConfiguration _context;
+        SocialMediaManager _socialMediaManager = new SocialMediaManager();
 
         public SocialMediaInfoesController(DBConfiguration context)
         {
@@ -20,144 +23,55 @@ namespace DigiPortfoli.Controllers
         }
 
         // GET: SocialMediaInfoes
-        public async Task<IActionResult> Index()
-        {
-              return _context.SocialMediaInfo != null ? 
-                          View(await _context.SocialMediaInfo.ToListAsync()) :
-                          Problem("Entity set 'DBConfiguration.SocialMediaInfo'  is null.");
-        }
-
-        // GET: SocialMediaInfoes/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null || _context.SocialMediaInfo == null)
-            {
-                return NotFound();
-            }
-
-            var socialMediaInfo = await _context.SocialMediaInfo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (socialMediaInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(socialMediaInfo);
-        }
-
-        // GET: SocialMediaInfoes/Create
-        public IActionResult Create()
+        public IActionResult Index()
         {
             return View();
         }
+        [HttpGet]
+        public async Task<string> GetAllSocialMedia()
+        {
+            return JsonSerializer.Serialize(await _socialMediaManager.GetSocialMediaInfoList(_context));
+        }
 
-        // POST: SocialMediaInfoes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpGet]
+        public async Task<string> GetCategory(int id)
+        {
+            return JsonSerializer.Serialize(await _socialMediaManager.GetSocialMediaInfo(_context, id));
+        }
+
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,PersonalInfoId,SocialMediaName,SocialMediaURL")] SocialMediaInfo socialMediaInfo)
+        public async Task<string> AddOrUpdate(SocialMediaInfo model)
         {
-            if (ModelState.IsValid)
+            Result result = new Result();
+            if (model == null)
             {
-                _context.Add(socialMediaInfo);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                result.Msg = "Nothing to update. Please insert valid data";
+                result.Status = "Error";
+                return JsonSerializer.Serialize(result);
             }
-            return View(socialMediaInfo);
+            else
+            {
+                result = await _socialMediaManager.AddOrUpdate(_context, model);
+                return JsonSerializer.Serialize(result);
+
+            }
         }
-
-        // GET: SocialMediaInfoes/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null || _context.SocialMediaInfo == null)
-            {
-                return NotFound();
-            }
-
-            var socialMediaInfo = await _context.SocialMediaInfo.FindAsync(id);
-            if (socialMediaInfo == null)
-            {
-                return NotFound();
-            }
-            return View(socialMediaInfo);
-        }
-
-        // POST: SocialMediaInfoes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,PersonalInfoId,SocialMediaName,SocialMediaURL")] SocialMediaInfo socialMediaInfo)
+        public async Task<string> DeleteSocialMedia(int Id)
         {
-            if (id != socialMediaInfo.Id)
+            Result result = new Result();
+            if (Id == 0)
             {
-                return NotFound();
+                result.Msg = "Nothing to delete. Please select valid data";
+                result.Status = "Error";
+                return JsonSerializer.Serialize(result);
             }
-
-            if (ModelState.IsValid)
+            else
             {
-                try
-                {
-                    _context.Update(socialMediaInfo);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!SocialMediaInfoExists(socialMediaInfo.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(socialMediaInfo);
-        }
+                result = await _socialMediaManager.DeleteSocialMedia(_context, Id);
+                return JsonSerializer.Serialize(result);
 
-        // GET: SocialMediaInfoes/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null || _context.SocialMediaInfo == null)
-            {
-                return NotFound();
             }
-
-            var socialMediaInfo = await _context.SocialMediaInfo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (socialMediaInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(socialMediaInfo);
-        }
-
-        // POST: SocialMediaInfoes/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            if (_context.SocialMediaInfo == null)
-            {
-                return Problem("Entity set 'DBConfiguration.SocialMediaInfo'  is null.");
-            }
-            var socialMediaInfo = await _context.SocialMediaInfo.FindAsync(id);
-            if (socialMediaInfo != null)
-            {
-                _context.SocialMediaInfo.Remove(socialMediaInfo);
-            }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool SocialMediaInfoExists(int id)
-        {
-          return (_context.SocialMediaInfo?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

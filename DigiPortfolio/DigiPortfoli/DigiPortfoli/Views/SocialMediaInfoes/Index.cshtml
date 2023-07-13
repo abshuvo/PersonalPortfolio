@@ -1,47 +1,180 @@
 ﻿@model IEnumerable<DigiPortfoli.Models.Entities.SocialMediaInfo>
 
-@{
-    Layout = "~/Views/Shared/_LayoutWithNavbar.cshtml";
-}
+<div class="row" style="margin-left:100px;margin-top:100px;">
+    <div class="col-md-4">
+        <div class="row"></div>
+        <div class=" col-md-9">
+            <input type="text" class="form-control" name="PersonalInfoId" id="PersonalInfoId" placeholder="Your PersonalInfoId">
+            <input type="text" class="form-control" name="SocialMediaName" id="SocialMediaName" placeholder="SocialMediaName">
+            <input type="text" class="form-control" name="SocialMediaURL" id="SocialMediaURL" placeholder="SocialMediaURL">
 
-<h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.PersonalInfoId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SocialMediaName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SocialMediaURL)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.PersonalInfoId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SocialMediaName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SocialMediaURL)
-            </td>
-            <td>
+
+        </div>
+        <div class=" col-md-3">
+            <button type="button" id="submit" onclick="SaveData()">Save</button>
+
+        </div>
+    </div>
+    <div class="col-md-7">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        PersonalInfoId
+                    </th>
+                    <th>
+                        SocialMediaName
+                    </th>
+                    <th>
+                        SocialMediaURL
+                    </th>
+
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody class="cat_body">
+                @*  @foreach (var item in Model)
+                {
+                <tr>
+                <td>
+                @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
                 <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+                </td>
+                </tr>
+                *@
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+
+<script>
+
+    $(document).ready(function () {
+        $('#Id').val(0);
+        $('#PersonalInfoId').val(0);
+        $('#SocialMediaName').val('');
+        $('#SocialMediaURL').val('');
+
+        getSocialMediaList();
+    });
+    function SaveData() {
+        // Call Web API to get a list of SocialMedia
+        if ($('#PersonalInfoId').val() == 0 || $('#PersonalInfoId').val() == undefined ||
+            $('#SocialMediaName').val() == '' || $('#SocialMediaName').val() == undefined ||
+            $('#SocialMediaURL').val() == '' || $('#SocialMediaURL').val() == undefined) {
+            alert("Please Insert Valid Input!!");
+        } else {
+            $.ajax({
+                url: '../SocialMediaInfoes/AddorUpdate/',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+
+                    Id: $('#Id').val(),
+                    PersonalInfoId: $('#PersonalInfoId').val(),
+                    SocialMediaName: $('#SocialMediaName').val(),
+                    SocialMediaURL: $('#SocialMediaURL').val()
+                },
+                success: function (data) {
+                    debugger
+                    if (data.Status == "success") {
+                        alert("Data Inserted Successfully!");
+                        getSocialMediaList();
+                        $('#Id').val(0);
+                        $('#PersonalInfoId').val(0);
+                        $('#SocialMediaName').val('');
+                        $('#SocialMediaURL').val('');
+
+
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (request, message, error) {
+                    debugger
+                    handleException(request, message, error);
+                }
+            });
+        }
+
+    }
+
+
+    // Get all SocialMedia to display
+    function getSocialMediaList() {
+        // Call Web API to get a list of SocialMedia
+        $.ajax({
+            url: '../SocialMediaInfoes/GetAllSocialMedia/',
+            type: 'GET',
+            dataType: 'json',
+            success: function (employees) {
+                debugger
+                $('.cat_row').remove();
+                var cat_rows = "";
+                for (var i = 0; i < employees.length; i++) {
+
+                    cat_rows = cat_rows + '<tr class="cat_row" ondblclick="updatedata(' + employees[i].PersonalInfoId + ',\'' + employees[i].SocialMediaName + '\',\'' + employees[i].SocialMediaURL + '\')"><td>' + employees[i].PersonalInfoId + '</td><td>' + employees[i].SocialMediaName + '</td><td>' + employees[i].SocialMediaURL + '</td><td><button type="button" onclick="DeleteSocialMedia(' + employees[i].PersonalInfoId + ')" >Delete</button></td></tr>';
+
+                }
+
+                $('.cat_body').append(cat_rows);
+
+            },
+            error: function (request, message, error) {
+                debugger
+                alert(message);
+            }
+        });
+    }
+
+    function updatedata(id, personalInfoId, socialMediaName, socialMediaURL) {
+        $('#Id').val(id);
+        $('#PersonalInfoId').val(personalInfoId);
+        $('#SocialMediaName').val(socialMediaName);
+        $('#SocialMediaURL').val(socialMediaURL);
+
+    }
+
+
+    function DeleteSocialMedia(id) {
+        // Call Web API to get a list of SocialMedia
+        if (isNaN(id) || id == 0) {
+            alert("Please Select Valid Data!!");
+        } else {
+            $.ajax({
+                url: '../SocialMediaInfoes/DeleteSocialMedia/',
+                type: 'POST',
+                dataType: 'json',
+                data: { Id: id },
+                success: function (data) {
+                    debugger
+                    if (data.Status == "success") {
+                        alert("Data Deleted Successfully!");
+                        getSocialMediaList();
+
+
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (request, message, error) {
+                    debugger
+                    handleException(request, message, error);
+                }
+            });
+        }
+
+    }
+
+</script>
+
