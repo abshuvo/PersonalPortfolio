@@ -7,12 +7,15 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DigiPortfoli.Models;
 using DigiPortfoli.Models.Entities;
+using DigiPortfoli.Services;
+using System.Text.Json;
 
 namespace DigiPortfoli.Controllers
 {
     public class PortfolioInfoesController : Controller
     {
         private readonly DBConfiguration _context;
+        PortfolioManager _portfolioManager = new PortfolioManager();
 
         public PortfolioInfoesController(DBConfiguration context)
         {
@@ -20,144 +23,55 @@ namespace DigiPortfoli.Controllers
         }
 
         // GET: PortfolioInfoes
-        public async Task<IActionResult> Index()
-        {
-              return _context.PortfolioInfo != null ? 
-                          View(await _context.PortfolioInfo.ToListAsync()) :
-                          Problem("Entity set 'DBConfiguration.PortfolioInfo'  is null.");
-        }
-
-        // GET: PortfolioInfoes/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null || _context.PortfolioInfo == null)
-            {
-                return NotFound();
-            }
-
-            var portfolioInfo = await _context.PortfolioInfo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (portfolioInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(portfolioInfo);
-        }
-
-        // GET: PortfolioInfoes/Create
-        public IActionResult Create()
+        public IActionResult Index()
         {
             return View();
         }
+        [HttpGet]
+        public async Task<string> GetAllPortfolio()
+        {
+            return JsonSerializer.Serialize(await _portfolioManager.GetPortfolioInfoList(_context));
+        }
 
-        // POST: PortfolioInfoes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpGet]
+        public async Task<string> GetCategory(int id)
+        {
+            return JsonSerializer.Serialize(await _portfolioManager.GetPortfolioInfo(_context, id));
+        }
+
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Description")] PortfolioInfo portfolioInfo)
+        public async Task<string> AddOrUpdate(PortfolioInfo model)
         {
-            if (ModelState.IsValid)
+            Result result = new Result();
+            if (model == null)
             {
-                _context.Add(portfolioInfo);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                result.Msg = "Nothing to update. Please insert valid data";
+                result.Status = "Error";
+                return JsonSerializer.Serialize(result);
             }
-            return View(portfolioInfo);
+            else
+            {
+                result = await _portfolioManager.AddOrUpdate(_context, model);
+                return JsonSerializer.Serialize(result);
+
+            }
         }
-
-        // GET: PortfolioInfoes/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null || _context.PortfolioInfo == null)
-            {
-                return NotFound();
-            }
-
-            var portfolioInfo = await _context.PortfolioInfo.FindAsync(id);
-            if (portfolioInfo == null)
-            {
-                return NotFound();
-            }
-            return View(portfolioInfo);
-        }
-
-        // POST: PortfolioInfoes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description")] PortfolioInfo portfolioInfo)
+        public async Task<string> DeletePortfolio(int Id)
         {
-            if (id != portfolioInfo.Id)
+            Result result = new Result();
+            if (Id == 0)
             {
-                return NotFound();
+                result.Msg = "Nothing to delete. Please select valid data";
+                result.Status = "Error";
+                return JsonSerializer.Serialize(result);
             }
-
-            if (ModelState.IsValid)
+            else
             {
-                try
-                {
-                    _context.Update(portfolioInfo);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PortfolioInfoExists(portfolioInfo.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(portfolioInfo);
-        }
+                result = await _portfolioManager.DeletePortfolio(_context, Id);
+                return JsonSerializer.Serialize(result);
 
-        // GET: PortfolioInfoes/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null || _context.PortfolioInfo == null)
-            {
-                return NotFound();
             }
-
-            var portfolioInfo = await _context.PortfolioInfo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (portfolioInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(portfolioInfo);
-        }
-
-        // POST: PortfolioInfoes/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            if (_context.PortfolioInfo == null)
-            {
-                return Problem("Entity set 'DBConfiguration.PortfolioInfo'  is null.");
-            }
-            var portfolioInfo = await _context.PortfolioInfo.FindAsync(id);
-            if (portfolioInfo != null)
-            {
-                _context.PortfolioInfo.Remove(portfolioInfo);
-            }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool PortfolioInfoExists(int id)
-        {
-          return (_context.PortfolioInfo?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

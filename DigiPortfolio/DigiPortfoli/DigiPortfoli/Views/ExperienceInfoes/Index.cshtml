@@ -1,65 +1,199 @@
 ﻿@model IEnumerable<DigiPortfoli.Models.Entities.ExperienceInfo>
 
-@{
-    Layout = "~/Views/Shared/_LayoutWithNavbar.cshtml";
-}
+<div class="row" style="margin-left:100px;margin-top:100px;">
+    <div class="col-md-4">
+        <div class="row"></div>
+        <div class=" col-md-9">
+            <input type="text" class="form-control" name="Title" id="Title" placeholder="Your Title">
+            <input type="date" class="form-control" name="StartDate" id="StartDate" placeholder="Your StartDate">
+            <input type="date" class="form-control" name="EndDate" id="EndDate" placeholder="Your EndDate">
+            <input type="text" class="form-control" name="Company" id="Company" placeholder="Your Company">
+            <input type="text" class="form-control" name="Department" id="Department" placeholder="Your Department">
+            <input type="text" class="form-control" name="Description" id="Description" placeholder=" Description">
+        </div>
+        <div class=" col-md-3">
+            <button type="button" id="submit" onclick="SaveData()">Save</button>
 
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.StartDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EndDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Company)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Department)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.StartDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EndDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Company)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Department)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        Title
+                    </th>
+                    <th>
+                        StartDate
+                    </th>
+                    <th>
+                        EndDate
+                    </th>
+                    <th>
+                        Company
+                    </th>
+                    <th>
+                        Department
+                    </th>
+                    <th>
+                        Description
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody class="cat_body">
+                @*  @foreach (var item in Model)
+                {
+                <tr>
+                <td>
+                @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
                 <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+                </td>
+                </tr>
+                *@
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+
+<script>
+
+    $(document).ready(function () {
+        $('#Id').val(0);
+        $('#Title').val('');
+        $('#StartDate').val('');
+        $('#EndDate').val('');
+        $('#Department').val('');
+        $('#Company').val('');
+        $('#Description').val('');
+        
+        getExperienceList();
+    });
+    function SaveData() {
+        // Call Web API to get a list of Experience
+        if ($('#Title').val() == '' || $('#Title').val() == undefined ||
+            $('#StartDate').val() == '' || $('#StartDate').val() == undefined ||
+            $('#EndDate').val() == '' || $('#EndDate').val() == undefined ||
+            $('#Department').val() == '' || $('#Department').val() == undefined ||
+            $('#Company').val() == '' || $('#Company').val() == undefined ||
+            $('#Description').val() == '' || $('#Description').val() == undefined ) {
+            alert("Please Insert Valid Input!!");
+        } else {
+            $.ajax({
+                url: '../ExperienceInfoes/AddorUpdate/',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    Id: $('#Id').val(),
+                    Title: $('#Title').val(),
+                    StartDate: $('#StartDate').val(),
+                    EndDate: $('#EndDate').val(),
+                    Department: $('#Department').val(),
+                    Company: $('#Company').val(),
+                    Description: $('#Description').val(),
+                    
+                },
+                success: function (data) {
+                    debugger
+                    if (data.Status == "success") {
+                        alert("Data Inserted Successfully!");
+                        getExperienceList();
+                        $('#Id').val(0);
+                        $('#Title').val('');
+                        $('#StartDate').val('');
+                        $('#EndDate').val('');
+                        $('#Department').val('');
+                        $('#Company').val('');
+                        $('#Description').val('');
+
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (request, message, error) {
+                    debugger
+                    handleException(request, message, error);
+                }
+            });
+        }
+
+    }
+
+
+    // Get all Experience to display
+    function getExperienceList() {
+        // Call Web API to get a list of Experience
+        $.ajax({
+            url: '../ExperienceInfoes/GetAllExperience/',
+            type: 'GET',
+            dataType: 'json',
+            success: function (employees) {
+                debugger
+                $('.cat_row').remove();
+                var cat_rows = "";
+                for (var i = 0; i < employees.length; i++) {
+
+                    cat_rows = cat_rows + '<tr class="cat_row" ondblclick="updatedata(' + employees[i].Id + ',\'' + employees[i].Title + '\',\'' + employees[i].StartDate + '\',\'' + employees[i].EndDate + '\',\'' + employees[i].Department + '\',\'' + employees[i].Company + '\',\'' + employees[i].Description + '\')"><td>' + employees[i].Title + '</td><td>' + employees[i].StartDate + '</td><td>' + employees[i].EndDate + '</td><td>' + employees[i].Department + '</td><td>' + employees[i].Company + '</td><td>' + employees[i].Description + '</td><td><button type="button" onclick="DeleteExperience(' + employees[i].Id + ')" >Delete</button></td></tr>'
+
+                }
+
+                $('.cat_body').append(cat_rows);
+
+            },
+            error: function (request, message, error) {
+                debugger
+                alert(message);
+            }
+        });
+    }
+
+    function updatedata(id, name, title, startDate, endDate, department, company, description) {
+        $('#Id').val(id);
+        $('#Title').val(title);
+        $('#StartDate').val(startDate);
+        $('#EndDate').val(endDate);
+        $('#Department').val(department);
+        $('#Company').val(company);
+        $('#Description').val(description);
+    }
+
+    function DeleteExperience(id) {
+        // Call Web API to get a list of Experience
+        if (isNaN(id) || id == 0) {
+            alert("Please Select Valid Data!!");
+        } else {
+            $.ajax({
+                url: '../ExperienceInfoes/DeleteExperience/',
+                type: 'POST',
+                dataType: 'json',
+                data: { Id: id },
+                success: function (data) {
+                    debugger
+                    if (data.Status == "success") {
+                        alert("Data Deleted Successfully!");
+                        getExperienceList();
+
+
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (request, message, error) {
+                    debugger
+                    handleException(request, message, error);
+                }
+            });
+        }
+
+    }
+
+</script>

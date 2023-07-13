@@ -7,12 +7,15 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DigiPortfoli.Models;
 using DigiPortfoli.Models.Entities;
+using DigiPortfoli.Services;
+using System.Text.Json;
 
 namespace DigiPortfoli.Controllers
 {
     public class ExperienceInfoesController : Controller
     {
         private readonly DBConfiguration _context;
+        ExperienceManager _experienceManager = new ExperienceManager();
 
         public ExperienceInfoesController(DBConfiguration context)
         {
@@ -20,144 +23,55 @@ namespace DigiPortfoli.Controllers
         }
 
         // GET: ExperienceInfoes
-        public async Task<IActionResult> Index()
-        {
-              return _context.ExperienceInfo != null ? 
-                          View(await _context.ExperienceInfo.ToListAsync()) :
-                          Problem("Entity set 'DBConfiguration.ExperienceInfo'  is null.");
-        }
-
-        // GET: ExperienceInfoes/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null || _context.ExperienceInfo == null)
-            {
-                return NotFound();
-            }
-
-            var experienceInfo = await _context.ExperienceInfo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (experienceInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(experienceInfo);
-        }
-
-        // GET: ExperienceInfoes/Create
-        public IActionResult Create()
+        public IActionResult Index()
         {
             return View();
         }
+        [HttpGet]
+        public async Task<string> GetAllExperience()
+        {
+            return JsonSerializer.Serialize(await _experienceManager.GetExperienceInfoList(_context));
+        }
 
-        // POST: ExperienceInfoes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpGet]
+        public async Task<string> GetExperience(int id)
+        {
+            return JsonSerializer.Serialize(await _experienceManager.GetExperienceInfo(_context, id));
+        }
+
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,StartDate,EndDate,Company,Department,Description")] ExperienceInfo experienceInfo)
+        public async Task<string> AddOrUpdate(ExperienceInfo model)
         {
-            if (ModelState.IsValid)
+            Result result = new Result();
+            if (model == null)
             {
-                _context.Add(experienceInfo);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                result.Msg = "Nothing to update. Please insert valid data";
+                result.Status = "Error";
+                return JsonSerializer.Serialize(result);
             }
-            return View(experienceInfo);
+            else
+            {
+                result = await _experienceManager.AddOrUpdate(_context, model);
+                return JsonSerializer.Serialize(result);
+
+            }
         }
-
-        // GET: ExperienceInfoes/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null || _context.ExperienceInfo == null)
-            {
-                return NotFound();
-            }
-
-            var experienceInfo = await _context.ExperienceInfo.FindAsync(id);
-            if (experienceInfo == null)
-            {
-                return NotFound();
-            }
-            return View(experienceInfo);
-        }
-
-        // POST: ExperienceInfoes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,StartDate,EndDate,Company,Department,Description")] ExperienceInfo experienceInfo)
+        public async Task<string> DeleteExperience(int Id)
         {
-            if (id != experienceInfo.Id)
+            Result result = new Result();
+            if (Id == 0)
             {
-                return NotFound();
+                result.Msg = "Nothing to delete. Please select valid data";
+                result.Status = "Error";
+                return JsonSerializer.Serialize(result);
             }
-
-            if (ModelState.IsValid)
+            else
             {
-                try
-                {
-                    _context.Update(experienceInfo);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ExperienceInfoExists(experienceInfo.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(experienceInfo);
-        }
+                result = await _experienceManager.DeleteExperience(_context, Id);
+                return JsonSerializer.Serialize(result);
 
-        // GET: ExperienceInfoes/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null || _context.ExperienceInfo == null)
-            {
-                return NotFound();
             }
-
-            var experienceInfo = await _context.ExperienceInfo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (experienceInfo == null)
-            {
-                return NotFound();
-            }
-
-            return View(experienceInfo);
-        }
-
-        // POST: ExperienceInfoes/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            if (_context.ExperienceInfo == null)
-            {
-                return Problem("Entity set 'DBConfiguration.ExperienceInfo'  is null.");
-            }
-            var experienceInfo = await _context.ExperienceInfo.FindAsync(id);
-            if (experienceInfo != null)
-            {
-                _context.ExperienceInfo.Remove(experienceInfo);
-            }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool ExperienceInfoExists(int id)
-        {
-          return (_context.ExperienceInfo?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
