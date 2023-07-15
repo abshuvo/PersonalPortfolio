@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
 namespace DigiPortfoli.Models.Entities
 {
     public class ContactMessage
@@ -12,6 +11,5 @@ namespace DigiPortfoli.Models.Entities
         public string? Subject { get; set; }
         public string? Message { get; set; }
         public bool IsSeen { get; set; }
-
     }
 }

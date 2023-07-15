@@ -4,12 +4,10 @@
 <!-- ======= Hero Section ======= -->
 <section id="hero" class="d-flex flex-column justify-content-center">
     <div class="container" data-aos="zoom-in" data-aos-delay="100">
-        <h1>Anik Biswas Shuvo</h1>
-        <p>I'm <span class="typed" data-typed-items=" Developer, Freelancer"></span></p>
+        <h1 id="name"></h1>
+        <p id="profession">I'm </p>
         <div class="social-links">
-            <a href="https://www.facebook.com/profile.php?id=100014630926162" class="facebook"><i class="bx bxl-facebook"></i></a>
-            <a href="https://github.com/abshuvo" class="Github"><i class="bx bxl-github"></i></a>
-            <a href="https://www.linkedin.com/in/anik-shuvo-3093ba14b/" class="linkedin"><i class="bx bxl-linkedin"></i></a>
+           
         </div>
     </div>
 </section><!-- End Hero -->
@@ -214,3 +212,47 @@
     
 
 </main><!-- End #main -->
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+<script>
+
+    $(document).ready(function () {
+        getHomepageData();
+    });
+
+
+
+    // Get all Category to display
+    function getHomepageData() {
+        // Call Web API to get a list of Category
+        $.ajax({
+            url: '../Home/GetHomePageData/',
+            type: 'GET',
+            dataType: 'json',
+            success: function (homepagedata) {
+                debugger
+                $('#name').append(homepagedata.Name);
+
+                var profession = " <span class='typed' >" + homepagedata.Profession + "</span>"
+                $('#profession').append(profession);
+
+                var links = "";
+                for (var i = 0; i < homepagedata.SocialLink.length; i++)
+                {
+                     links = links + " <a href='" + homepagedata.SocialLink[i].SocialMediaURL + "' class='facebook' > <i class='" + homepagedata.SocialLink[i].SocialMediaName + "' > </i></a >";
+                }
+
+                  $('.social-links').append(links);
+             
+                
+     
+            },
+            error: function (request, message, error) {
+                debugger
+                alert(message);
+            }
+        });
+    }
+</script>
