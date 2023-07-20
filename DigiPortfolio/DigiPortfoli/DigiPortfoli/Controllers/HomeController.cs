@@ -11,6 +11,7 @@ namespace DigiPortfoli.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly DBConfiguration _context;
         HomeManager _homeManager = new HomeManager();
+        AboutManager _aboutManager=new AboutManager();
 
         public HomeController(ILogger<HomeController> logger, DBConfiguration context)
         {
@@ -65,6 +66,14 @@ namespace DigiPortfoli.Controllers
         {
             return JsonSerializer.Serialize(await _homeManager.GetPersonalInfoList(_context));
         }
-        
+        //-----------------------Funcationalities for About Page'-----------------------------
+        [HttpGet]
+        public async Task<string> GetAboutPageData()
+        {
+            return JsonSerializer.Serialize(await _aboutManager.GetPortfolioInfoList(_context));
+        }
+
+
+
     }
 }

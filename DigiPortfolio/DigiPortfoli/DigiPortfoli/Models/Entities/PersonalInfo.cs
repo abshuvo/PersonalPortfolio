@@ -11,7 +11,7 @@ namespace DigiPortfoli.Models.Entities
         public string? Name { get; set; }
         [MaxLength(100)]
         public string? Profession { get; set; }
-        public DateTime? Birthdate { get; set; }
+        public DateTime Birthdate { get; set; }
         public decimal Age { get; set; }
         [MaxLength(20)]
         public string? Mobile { get; set; }
